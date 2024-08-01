@@ -1,0 +1,79 @@
+name: Generate Project
+
+on:
+  workflow_dispatch:
+    inputs:
+      repo_name:
+        description: 'Repository Name'
+        required: true
+        default: 'your_project_name'
+      artifact_id:
+        description: 'Artifact ID'
+        required: true
+        default: 'com.example.app'
+      group_id:
+        description: 'Group ID'
+        required: true
+        default: 'com.example'
+      version:
+        description: 'Version'
+        required: true
+        default: '0.1.0-SNAPSHOT'
+      package_name:
+        description: 'Package Name'
+        required: true
+        default: 'com.example.app'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # https://github.com/actions/checkout
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GHA_WORKFLOW_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.x
+
+      - name: Install Cookiecutter
+        run: |
+          python -m pip install --upgrade pip
+          pip install cookiecutter
+
+      # https://github.com/orgs/community/discussions/26560#discussioncomment-3252340
+      - name: Setup Git Configuration
+        run: |
+          git config --global --add safe.directory '*'
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          echo "Finished setting up git configuration."
+
+      - name: Generate project from Cookiecutter template
+        env:
+            GH_TOKEN: ${{ secrets.GHA_WORKFLOW_TOKEN }}
+
+        run: |
+          cookiecutter https://github.com/thrivent/template-java-repo.git \
+          --no-input \
+            repo_name=${{ github.event.inputs.repo_name }} \
+            artifact_id=${{ github.event.inputs.artifact_id }} \
+            group_id=${{ github.event.inputs.group_id }} \
+            version=${{ github.event.inputs.version }} \
+            package_name=${{ github.event.inputs.package_name }} \
+            repo_url=https://github.com/thrivent/${{ github.event.inputs.repo_name }}
+            _template=https://x-access-token:${{ secrets.GHA_WORKFLOW_TOKEN }}@github.com/thrivent/template-java-repo.git
+
+      - name: Initialize Git repository
+        run: |
+          cd ${{ github.event.inputs.repo_name }}
+          git init
+          git remote add origin https://github.com/thrivent/${{ github.event.inputs.repo_name }}.git
+          git add .
+          git commit -m "Initial commit from Cookiecutter template"
+          git push -u origin main
+
