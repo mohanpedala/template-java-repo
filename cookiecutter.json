@@ -5,5 +5,6 @@
     "version": "0.1.0-SNAPSHOT",
     "package_name": "com.example.app",
     "repo_url": "https://github.com/yourusername/java-maven-skeleton"
+    "cookiecutters_dir": "/tmp/.cookiecutters"
   }
   
